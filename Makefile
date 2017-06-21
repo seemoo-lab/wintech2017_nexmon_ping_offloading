@@ -198,6 +198,8 @@ setup-adhoc: FORCE
 
 configure-adhoc-node-1: setup-adhoc
 	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.1"'
+	adb $(ADBFLAGS) shell 'su -c "nexutil -s416 -i -v0xc2000014"'
+	adb $(ADBFLAGS) shell 'su -c "nexutil -g415"'
 
 configure-adhoc-node-2: setup-adhoc
 	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.2"'

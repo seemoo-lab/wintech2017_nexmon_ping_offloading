@@ -238,10 +238,7 @@ wlc_ioctl_4xx(struct wlc_info *wlc, int cmd, char *arg, int len, void *wlc_if)
         case NEX_SET_RSPEC_OVERRIDE:
         {
             if (len == 4) {
-                // set rspec for 5G band
-                wlc_set_ratespec_override(wlc, 1, *(int *) arg, 0);
-                // set rspec for 2G band
-                wlc_set_ratespec_override(wlc, 2, *(int *) arg, 0);
+                wlc->band->rspec_override = *(int *) arg;
                 ret = IOCTL_SUCCESS;
             }
         }
