@@ -58,7 +58,7 @@ wl_arp_recv_proc_hook(struct wlc_info **arpi, struct sk_buff *p)
     struct wlc_info *wlc = *arpi;
 
     if (frame->ip.protocol == IP_PROTOCOL_ICMP && frame->icmp.type == ICMP_TYPE_REQUEST) {
-        printf("%s: %d\n", __FUNCTION__, i++);
+        //printf("%s: %d\n", __FUNCTION__, i++);
 
         struct sk_buff *p_reply = (struct sk_buff *) pkt_buf_dup_skb(wlc->osh, p);
         frame = (struct ethernet_ip_icmp_ping_header *) p_reply->data;
