@@ -6,6 +6,17 @@ LOCAL_SRCS=$(wildcard src/*.c) src/ucode_compressed.c src/templateram.c
 COMMON_SRCS=$(wildcard $(NEXMON_ROOT)/patches/common/*.c)
 FW_SRCS=$(wildcard $(FW_PATH)/*.c)
 
+ifdef UCODEFILE
+ifeq ($(wildcard src/$(UCODEFILE)), )
+$(error selected src/$(UCODEFILE) does not exist)
+endif
+endif
+
+ADBSERIAL := 
+ADBFLAGS := $(ADBSERIAL)
+
+UCODEFILE=ucode.asm
+
 OBJS=$(addprefix obj/,$(notdir $(LOCAL_SRCS:.c=.o)) $(notdir $(COMMON_SRCS:.c=.o)) $(notdir $(FW_SRCS:.c=.o)))
 
 CFLAGS= \
@@ -22,6 +33,7 @@ CFLAGS= \
 	-DGIT_VERSION=\"$(GIT_VERSION)\" \
 	-DBUILD_NUMBER=\"$$(cat BUILD_NUMBER)\" \
 	-Wall -Werror -O2 -nostdlib -nostartfiles -ffreestanding -mthumb -march=$(NEXMON_ARCH) \
+	-Wno-unused \
 	-ffunction-sections -fdata-sections \
 	-I$(NEXMON_ROOT)/patches/include \
 	-Iinclude \
@@ -113,8 +125,8 @@ fw_bcmdhd.bin: init gen/patch.elf $(FW_PATH)/$(RAM_FILE) gen/nexmon.mk gen/flash
 # ucode compression related
 ###################################################################
 
-ifneq ($(wildcard src/ucode.asm), )
-gen/ucode.bin: src/ucode.asm
+ifneq ($(wildcard src/$(UCODEFILE)), )
+gen/ucode.bin: src/$(UCODEFILE)
 	@printf "\033[0;31m  ASSEMBLING UCODE\033[0m %s => %s\n" $< $@
 
 ifneq ($(wildcard $(NEXMON_ROOT)/buildtools/b43/assembler/b43-asm.bin), )
@@ -152,23 +164,23 @@ endif
 
 install-firmware: fw_bcmdhd.bin
 	@printf "\033[0;31m  REMOUNTING /system\033[0m\n"
-	$(Q)adb shell 'su -c "mount -o rw,remount /system"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "mount -o rw,remount /system"'
 	@printf "\033[0;31m  COPYING TO PHONE\033[0m %s => /sdcard/%s\n" $< $<
-	$(Q)adb push $< /sdcard/ >> log/adb.log 2>> log/adb.log
+	$(Q)adb $(ADBFLAGS) push $< /sdcard/ >> log/adb.log 2>> log/adb.log
 	@printf "\033[0;31m  COPYING\033[0m /sdcard/fw_bcmdhd.bin => /vendor/firmware/fw_bcmdhd.bin\n"
-	$(Q)adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "rm /vendor/firmware/fw_bcmdhd.bin && cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
 	@printf "\033[0;31m  RELOADING FIRMWARE\033[0m\n"
-	$(Q)adb shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
 
 backup-firmware: FORCE
-	adb shell 'su -c "cp /vendor/firmware/fw_bcmdhd.bin /sdcard/fw_bcmdhd.orig.bin"'
-	adb pull /sdcard/fw_bcmdhd.orig.bin
+	adb $(ADBFLAGS) shell 'su -c "cp /vendor/firmware/fw_bcmdhd.bin /sdcard/fw_bcmdhd.orig.bin"'
+	adb $(ADBFLAGS) pull /sdcard/fw_bcmdhd.orig.bin
 
 install-backup: fw_bcmdhd.orig.bin
-	adb shell 'su -c "mount -o rw,remount /system"' && \
-	adb push $< /sdcard/ && \
-	adb shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
-	adb shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+	adb $(ADBFLAGS) shell 'su -c "mount -o rw,remount /system"' && \
+	adb $(ADBFLAGS) push $< /sdcard/ && \
+	adb $(ADBFLAGS) shell 'su -c "cp /sdcard/fw_bcmdhd.bin /vendor/firmware/fw_bcmdhd.bin"'
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
 
 clean-firmware: FORCE
 	@printf "\033[0;31m  CLEANING\033[0m\n"
@@ -176,5 +188,18 @@ clean-firmware: FORCE
 
 clean: clean-firmware
 	$(Q)rm -f BUILD_NUMBER
+
+setup-adhoc: FORCE
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 mode ad-hoc"'
+	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 essid nexmon-test"'
+	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 channel 1"'
+	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 ap c0:ff:ee:c0:ff:ee"'
+
+configure-adhoc-node-1: setup-adhoc
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.1"'
+
+configure-adhoc-node-2: setup-adhoc
+	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.2"'
 
 FORCE:
