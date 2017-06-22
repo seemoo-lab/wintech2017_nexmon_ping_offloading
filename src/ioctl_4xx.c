@@ -243,6 +243,15 @@ wlc_ioctl_4xx(struct wlc_info *wlc, int cmd, char *arg, int len, void *wlc_if)
             }
         }
         break;
+
+        case NEX_SET_AMPDU_TX:
+        {
+            if (wlc->ampdu_tx && len > 0) {
+                wlc_ampdu_tx_set(wlc->ampdu_tx, *(bool *) arg);
+                ret = IOCTL_SUCCESS;
+            }
+        }
+        break;
     }
 
     return ret;

@@ -42,13 +42,23 @@
 #include <nexioctls.h>          // ioctls added in the nexmon patch
 #include <argprintf.h>          // allows to execute argprintf to print into the arg buffer
 
+uint32 ping_offloading = 0;
+
 int
 wlc_ioctl_5xx(struct wlc_info *wlc, int cmd, char *arg, int len, void *wlc_if)
 {
     int ret = IOCTL_ERROR;
 
     switch (cmd) {
+    	case 500:
+    	{
+    		if (len == 4) {
+    			ping_offloading = *(int *) arg;
 
+    			ret = IOCTL_SUCCESS;
+    		}
+    	}
+    	break;
     }
 
     return ret;

@@ -1,0 +1,29 @@
+SHELL := /bin/bash
+ADBPWRMON := -s 0d11927714081b75
+ADBCLIENT := -s 0afb120602b358e7
+RESULTSPATH := results/experiment2
+FRAMESIZE := 1200
+EXPLEN := 590
+PAUSELEN := 10
+
+setup: FORCE
+	mkdir -p $(RESULTSPATH)
+	make install-firmware ADBSERIAL="$(ADBPWRMON)"
+	make install-firmware ADBSERIAL="$(ADBCLIENT)"
+	make configure-adhoc-node-3 ADBSERIAL="$(ADBPWRMON)"
+	make configure-adhoc-node-1 ADBSERIAL="$(ADBCLIENT)"
+
+experiment: setup
+	adb $(ADBCLIENT) shell 'su -c "nexutil -s416 -i -v0xc2c00018"'
+	@printf "\033[0;31m  START THE POWER MONITOR AND PRESS ENTER TO START EXPERIMENT\033[0m\n"
+	read
+	for i in 0.001 0.002 0.003 0.005 0.008 0.013 0.021 0.036 0.060 0.099 0.165; \
+	do \
+		adb $(ADBCLIENT) shell "su -c \"ping -U -w $(EXPLEN) -i $$i -s $(FRAMESIZE) 192.168.0.3\"" > $(RESULTSPATH)/ping_$${i}ms.log; \
+		sleep $(PAUSELEN); \
+	done
+	sleep $(EXPLEN)
+	sleep $(PAUSELEN)
+	@printf "\033[0;31m  STOP THE POWER MONITOR\033[0m\n"
+
+FORCE:

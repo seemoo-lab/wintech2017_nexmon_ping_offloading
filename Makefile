@@ -190,18 +190,34 @@ clean: clean-firmware
 	$(Q)rm -f BUILD_NUMBER
 
 setup-adhoc: FORCE
-	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
-	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 mode ad-hoc"'
-	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 essid nexmon-test"'
-	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 channel 1"'
-	adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 ap c0:ff:ee:c0:ff:ee"'
+	@printf "\033[0;31m  ACTIVATING AD-HOC MODE\033[0m\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 down && ifconfig wlan0 up"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 mode ad-hoc"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 essid nexmon-test"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 channel 6"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "iwconfig wlan0 ap c0:ff:ee:c0:ff:ee"'
+	@printf "\033[0;31m  DEACTIVATING RETRANSMISSIONS\033[0m\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "nexutil -s32 -i -v1 && nexutil -s34 -i -v1"'
+	@printf "\033[0;31m  DEACTIVATING AMPDU_TX\033[0m\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "nexutil -s421 -i -v0"'
 
 configure-adhoc-node-1: setup-adhoc
-	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.1"'
-	adb $(ADBFLAGS) shell 'su -c "nexutil -s416 -i -v0xc2000014"'
-	adb $(ADBFLAGS) shell 'su -c "nexutil -g415"'
+	@printf "\033[0;31m  SETTING IP\033[0m 192.168.0.1\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.1"'
+#	$(Q)adb $(ADBFLAGS) shell 'su -c "nexutil -s416 -i -v0xc1000004"'
+#	$(Q)adb $(ADBFLAGS) shell 'su -c "nexutil -s416 -i -v0xc2000014"'
 
 configure-adhoc-node-2: setup-adhoc
-	adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.2"'
+	@printf "\033[0;31m  SETTING IP\033[0m 192.168.0.2\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.2"'
+
+configure-adhoc-node-3: setup-adhoc
+	@printf "\033[0;31m  SETTING IP\033[0m 192.168.0.3\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "ifconfig wlan0 192.168.0.3"'
+	$(Q)adb $(ADBFLAGS) shell 'su -c "nexutil -s500 -i -v2"'
+
+configure-adhoc-node-3-offload: configure-adhoc-node-3
+	@printf "\033[0;31m  ACTIVATING PING OFFLOADING\033[0m\n"
+	$(Q)adb $(ADBFLAGS) shell 'su -c "nexutil -s500 -i -v3"'
 
 FORCE:
