@@ -47,7 +47,7 @@ The following steps will get you started on Xubuntu 16.04 LTS:
 8. Navigate to utilities and run `make` to build all utilities such as nexmon.
 9. Attach your rooted Nexus 5 smartphone running stock firmware version 6.0.1 (M4B30Z, Dec 2016).
 10. Run `make install` to install all the built utilities on your phone.
-11. Navigate to patches/bcm4339/6_37_34_43/ and clone this repository: `git clone https://github.com/seemoo-lab/wisec2017_nexmon_jammer.git`
+11. Navigate to patches/bcm4339/6_37_34_43/ and clone this repository: `git clone https://github.com/seemoo-lab/wintech2017_nexmon_ping_offloading.git`
 12. Enter the created subdirectory wisec2017_nexmon_jammer and run `make install-firmware` to compile our firmware patch and install it on the attached Nexus 5 smartphone.
 
 # References
